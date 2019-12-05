@@ -136,16 +136,32 @@ class Bpmn2Reader
             );
         }
 
-        foreach ($document->getElementsByTagNameNs('http://www.omg.org/spec/BPMN/20100524/MODEL', 'task') as $element) {
+        $tasks = $document->getElementsByTagNameNs('http://www.omg.org/spec/BPMN/20100524/MODEL', 'task');
+        $userTasks = $document->getElementsByTagNameNs('http://www.omg.org/spec/BPMN/20100524/MODEL', 'userTask');
+        $activities = [];
+        foreach($tasks as $task)
+            $activities[] = $task;
+        foreach($userTasks as $userTask)
+            $activities[] = $userTask;
+        foreach ($activities as $element) {
             if (!$element->hasAttribute('id')) {
                 throw $this->createIdAttributeNotFoundException($element, $workflowId);
             }
+
+            $properties = [];
+            $extensions = $element->getElementsByTagNameNs('http://www.omg.org/spec/BPMN/20100524/MODEL', 'extensionElements');
+            foreach($extensions as $extension)
+                foreach($extension->getElementsByTagNameNs('http://camunda.org/schema/1.0/bpmn', 'properties') as $props)
+                    foreach($props->getElementsByTagNameNs('http://camunda.org/schema/1.0/bpmn', 'property') as $property)
+                        if ($property->hasAttributes())
+                            $properties[$property->getAttribute('name')] = $property->getAttribute('value');
 
             $workflowBuilder->addTask(
                 $element->getAttribute('id'),
                 $this->provideRoleIdForFlowObject($flowObjectRoles, $element->getAttribute('id')),
                 $element->hasAttribute('name') ? $element->getAttribute('name') : null,
-                $element->hasAttribute('default') ? $element->getAttribute('default') : null
+                $element->hasAttribute('default') ? $element->getAttribute('default') : null,
+                count($properties) ? $properties : null
             );
         }
 
