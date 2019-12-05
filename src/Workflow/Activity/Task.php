@@ -43,15 +43,21 @@ class Task implements ActivityInterface, \Serializable
     private $defaultSequenceFlowId;
 
     /**
+     * @var mixed
+     */
+    private $additionalData;
+
+    /**
      * @param int|string $id
      * @param Role       $role
      * @param string     $name
      */
-    public function __construct($id, Role $role, $name = null)
+    public function __construct($id, Role $role, $name = null, $additionalData = null)
     {
         $this->id = $id;
         $this->role = $role;
         $this->name = $name;
+        $this->additionalData = $additionalData;
     }
 
     /**
@@ -235,10 +241,11 @@ class Task implements ActivityInterface, \Serializable
      */
     public function createWorkItem()
     {
-        if (!(count($this->workItems) == 0 || $this->isEnded())) {
+        // so it can loop back
+/*        if (!(count($this->workItems) == 0 || $this->isEnded())) {
             throw new UnexpectedActivityStateException(sprintf('The current work item of the activity "%s" is not ended.', $this->getId()));
         }
-
+*/
         $this->workItems[] = new WorkItem();
     }
 
@@ -320,5 +327,15 @@ class Task implements ActivityInterface, \Serializable
         }
 
         return $this->workItems[$index];
+    }
+
+    public function getWorkItems()
+    {
+        return $this->workItems;
+    }
+
+    public function getAdditionalData()
+    {
+        return $this->additionalData;
     }
 }
