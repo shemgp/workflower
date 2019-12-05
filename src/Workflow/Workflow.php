@@ -338,6 +338,72 @@ class Workflow implements \Serializable
         $this->next();
     }
 
+    public function startFlowTo(StartEvent $event)
+    {
+        if ($this->stateMachine === null) {
+            $this->stateMachine = $this->stateMachineBuilder->getStateMachine();
+        }
+
+        $this->startDate = new \DateTime();
+        $this->stateMachine->start();
+        $this->stateMachine->triggerEvent($event->getId());
+        $currentFlowObject = $this->getCurrentFlowObject();
+        $connectingObject = $this->connectingObjectCollection->filterBySource($currentFlowObject);
+        $selectedSequenceFlow = current(current($connectingObject));
+        $this->stateMachine->triggerEvent($selectedSequenceFlow->getDestination()->getId());
+        // $currentFlowObject = $this->getCurrentFlowObject();
+        // $currentFlowObject->createWorkItem();
+        // $this->allocateWorkItem($currentFlowObject, $participant);
+        $this->intelligentNext();
+        return ['options' => $this->getNextOptionsNames(), 'current' => $this->getCurrentFlowObject()->getName()];
+    }
+
+    private function initStateMachine()
+    {
+        $this->stateMachine = $this->stateMachineBuilder->getStateMachine();
+    }
+
+    public function getNextOptions()
+    {
+        if ($this->stateMachine == null) {
+            $this->initStateMachine();
+        }
+
+        if ($this->getCurrentFlowObject() == null)
+        {
+            $starting = $this->stateMachine->getState(StateMachineInterface::STATE_INITIAL)->getStateId();
+            $transition = current($this->stateMachine->getTransitionMap()[$starting]);
+            $events = $transition->getToState()->getEvents();
+            $next_states = [];
+            foreach($events as $event)
+                $next_states[] = $this->flowObjectCollection->get($event->getEventId());
+            return $next_states;
+        }
+        else
+        {
+            $currentFlowObject = $this->getCurrentFlowObject();
+            $fos = $this->connectingObjectCollection->filterBySource($currentFlowObject);
+            $next_sequences = [];
+            foreach($fos as $next_sequence)
+                $next_sequences[] = $next_sequence;
+            return $next_sequences;
+        }
+    }
+
+    public function getNextOptionsNames()
+    {
+        $names = [];
+        foreach($this->getNextOptions() as $option)
+        {
+            $name = $option->getName();
+            if ($name == null)
+                $names[] = $option->getId();
+            else
+                $names[] = $name;
+        }
+        return $names;
+    }
+
     /**
      * @param ActivityInterface    $activity
      * @param ParticipantInterface $participant
@@ -373,6 +439,15 @@ class Workflow implements \Serializable
 
         $activity->complete($participant);
         $this->selectSequenceFlow($activity);
+        $this->next();
+    }
+
+    public function completeTask(ParticipantInterface $participant)
+    {
+        $activity = $this->getCurrentFlowObject();
+        $this->assertParticipantHasRole($activity, $participant);
+        $this->assertCurrentFlowObjectIsExpectedActivity($activity);
+        $activity->complete($participant);
         $this->next();
     }
 
@@ -513,6 +588,44 @@ class Workflow implements \Serializable
     }
 
     /**
+     * @param PHPMentors\Workflower\Workflow\Connection\SequenceFlow $nextSquence
+     *
+     * @throws SequenceFlowNotSelectedException
+     */
+    public function flowTo($nextSequence = null)
+    {
+        if ($nextSequence == null)
+        {
+            $options = $this->getNextOptions();
+            if (count($options) == 1)
+            {
+                $nextSequence = $options[0];
+            }
+        }
+
+        if (is_string($nextSequence))
+        {
+            $options = $this->getNextOptions();
+            foreach($options as $option)
+            {
+                if ($option->getName() == $nextSequence
+                        || $option->getId() == $nextSequence)
+                    $nextSequence = $option;
+            }
+        }
+
+        if (!$nextSequence instanceof \PHPMentors\Workflower\Workflow\Connection\SequenceFlow) {
+            throw new SequenceFlowNotSelectedException(sprintf('No sequence flow can be selected on "%s".', $nextSequence->getId()));
+        }
+
+        $this->stateMachine->triggerEvent($nextSequence->getDestination()->getId());
+
+        $currentFlowObject = $this->getCurrentFlowObject();
+        if ($currentFlowObject instanceof \PHPMentors\Workflower\Workflow\Activity\Task)
+            $this->intelligentNext();
+    }
+
+    /**
      * @param ActivityInterface    $activity
      * @param ParticipantInterface $participant
      *
@@ -549,6 +662,24 @@ class Workflow implements \Serializable
             if ($currentFlowObject instanceof OperationalInterface) {
                 $this->executeOperationalActivity($currentFlowObject);
             }
+        } elseif ($currentFlowObject instanceof EndEvent) {
+            $this->end($currentFlowObject);
+        }
+    }
+
+    /**
+     * @since Method available since Release 1.2.0
+     */
+    private function intelligentNext()
+    {
+        $currentFlowObject = $this->getCurrentFlowObject();
+        if ($currentFlowObject instanceof ActivityInterface) {
+            $currentFlowObject->createWorkItem();
+
+            // we don't use operationRunner
+            // if ($currentFlowObject instanceof OperationalInterface) {
+            //     $this->executeOperationalActivity($currentFlowObject);
+            // }
         } elseif ($currentFlowObject instanceof EndEvent) {
             $this->end($currentFlowObject);
         }
