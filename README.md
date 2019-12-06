@@ -43,6 +43,86 @@ A BPMN 2.0 workflow engine for PHP
 
 Add the dependency to `phpmentors/workflower` into your `composer.json` file as the following:
 
+## Example
+
+```php
+use PHPMentors\Workflower\Definition\Bpmn2File;
+use PHPMentors\Workflower\Definition\Bpmn2Reader;
+use PHPMentors\Workflower\Workflow\WorkflowRepositoryInterface;
+use PHPMentors\Workflower\Workflow\Workflow;
+
+class BpmnFiles2WorkflowRepository implements WorkflowRepositoryInterface
+{
+    /**
+     * @var array
+     */
+    private $bpmn2Files = array();
+
+    /**
+     * {@inheritdoc}
+     */
+    public function add($workflow): void
+    {
+        assert($workflow instanceof Bpmn2File);
+
+        $this->bpmn2Files[$workflow->getId()] = $workflow;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function remove($workflow): void
+    {
+        assert($workflow instanceof Bpmn2File);
+
+        if (array_key_exists($workflow->getId(), $this->bpmn2Files)) {
+            unset($this->bpmn2Files[$workflow->getId()]);
+        }
+    }
+
+    /**
+     * {@inheritdoc}
+     *
+     * @return Workflow
+     */
+    public function findById($id): ?Workflow
+    {
+        if (!array_key_exists($id, $this->bpmn2Files)) {
+            return null;
+        }
+
+        $bpmn2Reader = new Bpmn2Reader();
+
+        return $bpmn2Reader->read($this->bpmn2Files[$id]->getFile());
+    }
+
+    public function getAll()
+    {
+        return $this->bpmn2Files;
+    }
+}
+
+$bpmn_file = 'sample.bpmn';
+$bpmn_workflow_file = new Bpmn2File($bpmn_file);
+
+$repo = new BpmnFiles2WorkflowRepository();
+$repo->add($bpmn_workflow_file);
+$wf = $repo->findById("iutus enrollment");
+
+$options = $wf->getNextOptions();
+$wf->startFlowTo($options[0]);
+
+var_dump($wf->getNextOptionsNames());
+$wf->flowTo();
+
+var_dump($wf->getNextOptionsNames());
+$wf->flowTo("interview");
+
+var_dump($wf->getNextOptionsNames());
+
+var_dump($wf->getActivityLog());
+```
+
 **Stable version:**
 
 ```
