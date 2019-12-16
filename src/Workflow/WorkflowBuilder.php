@@ -264,7 +264,7 @@ class WorkflowBuilder
             list($roleId, $name, $additionalData) = $task;
             $this->assertWorkflowHasRole($workflow, $roleId);
 
-            $workflow->addFlowObject(new Task($id, $workflow->getRole($roleId), $name));
+            $workflow->addFlowObject(new Task($id, $workflow->getRole($roleId), $name, $additionalData));
         }
 
         foreach ($this->serviceTasks as $id => $task) {

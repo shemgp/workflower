@@ -123,6 +123,7 @@ class Workflow implements \Serializable
         $this->flowObjectCollection = new FlowObjectCollection();
         $this->roleCollection = new RoleCollection();
         $this->stateMachineBuilder = $this->createStateMachineBuilder($this->id);
+        $this->transaction = null;
     }
 
     /**
@@ -625,6 +626,11 @@ class Workflow implements \Serializable
             $this->intelligentNext();
     }
 
+    public function jumpTo($name)
+    {
+        $this->stateMachine->jumpToState($name);
+    }
+
     /**
      * @param ActivityInterface    $activity
      * @param ParticipantInterface $participant
@@ -697,5 +703,45 @@ class Workflow implements \Serializable
         $this->startWorkItem($operational, $participant);
         $this->operationRunner->run(/* @var $operational OperationalInterface */ $operational, $this);
         $this->completeWorkItem($operational, $participant);
+    }
+
+    public function getRoleCollection()
+    {
+        return $this->roleCollection;
+    }
+
+    public function setRoleCollection($roleCollection)
+    {
+        $this->roleCollection = $roleCollection;
+    }
+
+    public function getFlowObjectCollection()
+    {
+        return $this->flowObjectCollection;
+    }
+
+    public function setFlowObjectCollection($flowObjectCollection)
+    {
+        $this->flowObjectCollection = $flowObjectCollection;
+    }
+
+    public function getconnectingObjectCollection()
+    {
+        return $this->connectingObjectCollection;
+    }
+
+    public function setconnectingObjectCollection($connectingObjectCollection)
+    {
+        $this->connectingObjectCollection = $connectingObjectCollection;
+    }
+
+    public function getStateMachine()
+    {
+        return $this->stateMachine;
+    }
+
+    public function setStateMachine($stateMachine)
+    {
+        $this->stateMachine = $stateMachine;
     }
 }
