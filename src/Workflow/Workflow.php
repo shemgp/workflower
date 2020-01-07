@@ -624,7 +624,9 @@ class Workflow implements \Serializable
             foreach($options as $option)
             {
                 if ($option->getName() == $nextSequence
-                        || $option->getId() == $nextSequence)
+                        || $option->getId() == $nextSequence
+                        || $option->getDestination()->getName() == $nextSequence
+                        || $option->getDestination()->getId() == $nextSequence)
                     $nextSequence = $option;
             }
         }
