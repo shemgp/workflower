@@ -339,11 +339,25 @@ class Workflow implements \Serializable
         $this->next();
     }
 
-    public function startFlowTo(StartEvent $event)
+    public function startFlowTo($event)
     {
         if ($this->stateMachine === null) {
             $this->stateMachine = $this->stateMachineBuilder->getStateMachine();
         }
+
+        if (is_string($event))
+        {
+            $options = $this->getNextOptions();
+            foreach($options as $option)
+            {
+                if ($option->getName() == $event
+                        || $option->getId() == $event)
+                    $event = $option;
+            }
+        }
+
+        if (!is_object($event))
+            throw new \Exception("No such event: \"".$event."\".");
 
         $this->startDate = new \DateTime();
         $this->stateMachine->start();
