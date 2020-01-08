@@ -129,26 +129,33 @@ class Workflow implements \Serializable
     /**
      * {@inheritdoc}
      */
-    public function serialize()
+    public function serialize($ignore = [])
     {
-        return serialize(array(
-            'name' => $this->name,
-            'connectingObjectCollection' => $this->connectingObjectCollection,
-            'flowObjectCollection' => $this->flowObjectCollection,
-            'roleCollection' => $this->roleCollection,
-            'startDate' => $this->startDate,
-            'endDate' => $this->endDate,
-            'stateMachine' => $this->stateMachine,
-        ));
+        $fields = [
+                'name',
+                'connectingObjectCollection',
+                'flowObjectCollection',
+                'roleCollection',
+                'startDate',
+                'endDate',
+                'stateMachine',
+            ];
+
+        $data = [];
+        foreach($fields as $field)
+            if (!in_array($field, $ignore))
+                $data[$field] = $this->{$field};
+
+        return serialize($data);
     }
 
     /**
      * {@inheritdoc}
      */
-    public function unserialize($serialized)
+    public function unserialize($serialized, $ignore = [])
     {
         foreach (unserialize($serialized) as $name => $value) {
-            if (property_exists($this, $name)) {
+            if (property_exists($this, $name) && !in_array($name, $ignore)) {
                 $this->$name = $value;
             }
         }
