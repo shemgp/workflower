@@ -616,7 +616,7 @@ class Workflow implements \Serializable
      */
     public function flowTo($nextSequence = null)
     {
-        if ($nextSequence == null)
+        if ($nextSequence === null)
         {
             $options = $this->getNextOptions();
             if (count($options) == 1)
@@ -643,9 +643,9 @@ class Workflow implements \Serializable
         }
 
         $this->stateMachine->triggerEvent($nextSequence->getDestination()->getId());
-
+        
         $currentFlowObject = $this->getCurrentFlowObject();
-        if ($currentFlowObject instanceof \PHPMentors\Workflower\Workflow\Activity\Task)
+        if ($currentFlowObject instanceof \PHPMentors\Workflower\Workflow\Activity\Task || $currentFlowObject instanceof \PHPMentors\Workflower\Workflow\Gateway\ExclusiveGateway)
             $this->intelligentNext();
     }
 
