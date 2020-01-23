@@ -643,9 +643,9 @@ class Workflow implements \Serializable
         }
 
         $this->stateMachine->triggerEvent($nextSequence->getDestination()->getId());
-        
+
         $currentFlowObject = $this->getCurrentFlowObject();
-        if ($currentFlowObject instanceof \PHPMentors\Workflower\Workflow\Activity\Task || $currentFlowObject instanceof \PHPMentors\Workflower\Workflow\Gateway\ExclusiveGateway)
+        if ($currentFlowObject instanceof \PHPMentors\Workflower\Workflow\Activity\Task || $currentFlowObject instanceof \PHPMentors\Workflower\Workflow\Gateway\ExclusiveGateway || $currentFlowObject instanceof EndEvent)
             $this->intelligentNext();
     }
 
