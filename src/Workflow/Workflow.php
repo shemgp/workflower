@@ -404,6 +404,9 @@ class Workflow implements \Serializable
         else
         {
             $currentFlowObject = $this->getCurrentFlowObject();
+            if ($currentFlowObject instanceOf \PHPMentors\Workflower\Workflow\Event\EndEvent)
+                return [$currentFlowObject];
+
             $fos = $this->connectingObjectCollection->filterBySource($currentFlowObject);
             $next_sequences = [];
             foreach($fos as $next_sequence)
