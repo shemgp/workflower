@@ -641,6 +641,12 @@ class Workflow implements \Serializable
             }
         }
 
+        if ($nextSequence instanceOf \PHPMentors\Workflower\Workflow\Event\EndEvent)
+        {
+            // just return false when ended
+            return false;
+        }
+
         if (!$nextSequence instanceof \PHPMentors\Workflower\Workflow\Connection\SequenceFlow) {
             throw new SequenceFlowNotSelectedException(sprintf('No sequence flow can be selected on "%s".', $nextSequence->getId()));
         }
