@@ -617,7 +617,7 @@ class Workflow implements \Serializable
      *
      * @throws SequenceFlowNotSelectedException
      */
-    public function flowTo($nextSequence = null)
+    public function flowTo($nextSequence = null, $only_to_non_defaults = false)
     {
         if ($nextSequence === null)
         {
@@ -643,12 +643,18 @@ class Workflow implements \Serializable
 
         if ($nextSequence instanceOf \PHPMentors\Workflower\Workflow\Event\EndEvent)
         {
-            // just return false when ended
-            return false;
+            // just return null when ended
+            return null;
         }
 
         if (!$nextSequence instanceof \PHPMentors\Workflower\Workflow\Connection\SequenceFlow) {
             throw new SequenceFlowNotSelectedException(sprintf('No sequence flow can be selected on "%s".', $nextSequence->getId()));
+        }
+
+        if ($only_to_non_defaults)
+        {
+            if ($nextSequence->getId() == $nextSequence->getSource()->getDefaultSequenceFlowId())
+                return false;
         }
 
         $this->stateMachine->triggerEvent($nextSequence->getDestination()->getId());
@@ -656,6 +662,8 @@ class Workflow implements \Serializable
         $currentFlowObject = $this->getCurrentFlowObject();
         if ($currentFlowObject instanceof \PHPMentors\Workflower\Workflow\Activity\Task || $currentFlowObject instanceof \PHPMentors\Workflower\Workflow\Gateway\ExclusiveGateway || $currentFlowObject instanceof EndEvent)
             $this->intelligentNext();
+
+        return true;
     }
 
     public function jumpTo($name)
