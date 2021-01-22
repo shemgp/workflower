@@ -14,6 +14,7 @@ namespace PHPMentors\Workflower\Definition;
 
 use PHPMentors\Workflower\Workflow\Workflow;
 use PHPMentors\Workflower\Workflow\WorkflowBuilder;
+use Illuminate\Support\Facades\Cache;
 
 class Bpmn2Reader
 {

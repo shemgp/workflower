@@ -784,4 +784,24 @@ class Workflow implements \Serializable
     {
         $this->stateMachine = $stateMachine;
     }
+
+    public function getStateMachineBuilder()
+    {
+        return $this->stateMachineBuilder;
+    }
+
+    public function setStateMachineBuilder($stateMachineBuilder)
+    {
+        $this->stateMachineBuilder = $stateMachineBuilder;
+    }
+
+    public function recreateStateMachineBuilder($id)
+    {
+        $this->stateMachineBuilder = $this->createStateMachineBuilder($this->id);
+    }
+
+    public function setId($id)
+    {
+        $this->id = $id;
+    }
 }
